@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1643471558 source:k:\work & study\crc\crc_study(codeblocks)\crc_study\crc_study.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1651425661 source:h:\work & study\crc\crc_study(codeblocks)\crc_study\crc_study.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
