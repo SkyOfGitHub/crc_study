@@ -10,6 +10,10 @@
 // unsigned char CRC_7(unsigned char *, unsigned int);
 // unsigned int CRC_16(unsigned char *, unsigned int);
 // unsigned int CRC_16_for_SD_CMD(unsigned char *array, unsigned int num);
+unsigned char CRC4(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
+unsigned char CRC5(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
+unsigned char CRC6(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
+unsigned char CRC7(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
 unsigned char CRC8(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
 unsigned int CRC16(const unsigned char * const array, const unsigned int num, const unsigned int poly, const unsigned int init, const unsigned char refin, const unsigned char refout, const unsigned int xorout);
 unsigned long int CRC32(const unsigned char * const array, const unsigned int num, const unsigned long int poly, const unsigned long int init, const unsigned char refin, const unsigned char refout, const unsigned long int xorout);
@@ -27,6 +31,24 @@ int main(void)
 {
   unsigned int i;
 
+  watch = CRC4((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x03, 0x00, 1, 1, 0x00); /* poly: CRC-4/ITU x4+x+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
+  printf("CRC4 = 0x%02X\n", watch);
+
+  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x09, 0x09, 0, 0, 0x00); /* poly: CRC-5/EPC x5+x3+1, init: 0x09, refin: false, refout: false, xorout: 0x00 */
+  printf("CRC5 = 0x%02X\n", watch);
+  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x15, 0x00, 1, 1, 0x00); /* poly: CRC-5/ITU x5+x4+x2+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
+  printf("CRC5 = 0x%02X\n", watch);
+  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x05, 0x1f, 1, 1, 0x1f); /* poly: CRC-5/USB x5+x2+1, init: 0x1f, refin: true, refout: true, xorout: 0x1f */
+  printf("CRC5 = 0x%02X\n", watch);
+
+  watch = CRC6((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x03, 0x00, 1, 1, 0x00); /* poly: CRC-6/ITU x6+x+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
+  printf("CRC6 = 0x%02X\n", watch);
+
+  watch = CRC7((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x09, 0x00, 0, 0, 0x00); /* poly: CRC-7/MMC x7+x3+1, init: 0x00, refin: false, refout: false, xorout: 0x00 */
+  printf("CRC7 = 0x%02X\n", watch);
+  // watch = CRC_7((unsigned char *)array, sizeof(array) / sizeof(unsigned char));
+  // printf("CRC7 = 0x%02X\n", watch);
+
   watch = CRC8((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x07, 0xff, 1, 1, 0x00); /* poly: CRC-8/ROHC x8+x2+x+1, init: 0xff, refin: true, refout: true, xorout: 0x00 */
   printf("CRC8 = 0x%02X\n", watch);
   watch = CRC8((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x07, 0x00, 0, 0, 0x55); /* poly: CRC-8/ITU x8+x2+x+1, init: 0x00, refin: false, refout: false, xorout: 0x55 */
@@ -35,9 +57,6 @@ int main(void)
   printf("CRC8 = 0x%02X\n", watch);
   // watch = CRC_8((unsigned char *)array, sizeof(array) / sizeof(unsigned char));
   // printf("CRC8 = 0x%02X\n", watch);
-
-  // watch = CRC_7((unsigned char *)array, sizeof(array) / sizeof(unsigned char));
-  // printf("CRC7 = 0x%02X\n", watch);
 
   watch16 = CRC16((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x8005, 0x0000, 1, 1, 0xffff); /* poly: CRC-16/MAXIM x16+x15+x2+1, init: 0x0000, refin: true, refout: true, xorout: 0xffff */
   printf("CRC16 = 0x%04X\n", watch16);
@@ -75,6 +94,438 @@ static unsigned char byte_reverse(unsigned char byte)
   }
 
   return result;
+}
+
+unsigned char CRC4(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+{
+  unsigned char reg;
+
+  if (num < 1) return 0;
+
+  unsigned int byte;
+  unsigned char bit;
+  unsigned char tmp;
+  unsigned int max_byte;
+
+  if (0 != refin)
+  {
+    reg  = byte_reverse(array[0]) >> 4 & 0x0f;
+  }
+  else
+  {
+    reg  = array[0] >> 4 & 0x0f;
+  }
+
+  reg ^= init;
+
+  byte = 0; /* 下一个左移的数据字节，即第一个数据字节，因为还有2位没有左移 */
+
+  if (0 != refin)
+  {
+    bit = 0x10; /* 下一个左移的位 */
+  }
+  else
+  {
+    bit = 0x08; /* 下一个左移的位 */
+  }
+
+  max_byte = num - 1; /* 计算出最后一个数据字节的位置 */
+
+  while (byte <= max_byte)
+  {
+    tmp = array[byte];
+
+    if (reg & 0x08)
+    {
+      reg = reg << 1 | (tmp & bit ? 0x01 : 0x00);
+      reg ^= poly;
+    }
+    else
+    {
+      reg = reg << 1 | (tmp & bit ? 0x01 : 0x00);
+    }
+
+
+    if (0 != refin)
+    {
+      bit <<= 1;
+    }
+    else
+    {
+      bit >>= 1;
+    }
+
+    if (0 == bit)
+    {
+      ++byte;
+  
+      if (0 != refin)
+      {
+        bit = 0x01; /* 下一个左移的位 */
+      }
+      else
+      {
+        bit = 0x80; /* 下一个左移的位 */
+      }
+    }
+  }
+
+  /* 以下是填充位左移 */
+
+  bit = 4; /* 剩下的填充位个数 */
+  
+  for ( ; ; )
+  {
+    if (reg & 0x08)
+    {
+      reg = reg << 1;
+      reg ^= poly;
+    }
+    else
+    {
+      reg = reg << 1;
+    }
+
+    --bit;
+
+    if (0 == bit)
+    {
+      break;
+    }
+  }
+
+  if (0 != refout)
+  {
+    reg = byte_reverse(reg) >> 4;
+  }
+
+  reg ^= xorout;
+
+  return reg & 0x0f;
+}
+
+unsigned char CRC5(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+{
+  unsigned char reg;
+
+  if (num < 1) return 0;
+
+  unsigned int byte;
+  unsigned char bit;
+  unsigned char tmp;
+  unsigned int max_byte;
+
+  if (0 != refin)
+  {
+    reg  = byte_reverse(array[0]) >> 3 & 0x1f;
+  }
+  else
+  {
+    reg  = array[0] >> 3 & 0x1f;
+  }
+
+  reg ^= init;
+
+  byte = 0; /* 下一个左移的数据字节，即第一个数据字节，因为还有2位没有左移 */
+
+  if (0 != refin)
+  {
+    bit = 0x20; /* 下一个左移的位 */
+  }
+  else
+  {
+    bit = 0x04; /* 下一个左移的位 */
+  }
+
+  max_byte = num - 1; /* 计算出最后一个数据字节的位置 */
+
+  while (byte <= max_byte)
+  {
+    tmp = array[byte];
+
+    if (reg & 0x10)
+    {
+      reg = reg << 1 | (tmp & bit ? 0x01 : 0x00);
+      reg ^= poly;
+    }
+    else
+    {
+      reg = reg << 1 | (tmp & bit ? 0x01 : 0x00);
+    }
+
+
+    if (0 != refin)
+    {
+      bit <<= 1;
+    }
+    else
+    {
+      bit >>= 1;
+    }
+
+    if (0 == bit)
+    {
+      ++byte;
+  
+      if (0 != refin)
+      {
+        bit = 0x01; /* 下一个左移的位 */
+      }
+      else
+      {
+        bit = 0x80; /* 下一个左移的位 */
+      }
+    }
+  }
+
+  /* 以下是填充位左移 */
+
+  bit = 5; /* 剩下的填充位个数 */
+  
+  for ( ; ; )
+  {
+    if (reg & 0x10)
+    {
+      reg = reg << 1;
+      reg ^= poly;
+    }
+    else
+    {
+      reg = reg << 1;
+    }
+
+    --bit;
+
+    if (0 == bit)
+    {
+      break;
+    }
+  }
+
+  if (0 != refout)
+  {
+    reg = byte_reverse(reg) >> 3;
+  }
+
+  reg ^= xorout;
+
+  return reg & 0x1f;
+}
+
+unsigned char CRC6(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+{
+  unsigned char reg;
+
+  if (num < 1) return 0;
+
+  unsigned int byte;
+  unsigned char bit;
+  unsigned char tmp;
+  unsigned int max_byte;
+
+  if (0 != refin)
+  {
+    reg  = byte_reverse(array[0]) >> 2 & 0x3f;
+  }
+  else
+  {
+    reg  = array[0] >> 2 & 0x3f;
+  }
+
+  reg ^= init;
+
+  byte = 0; /* 下一个左移的数据字节，即第一个数据字节，因为还有2位没有左移 */
+
+  if (0 != refin)
+  {
+    bit = 0x40; /* 下一个左移的位 */
+  }
+  else
+  {
+    bit = 0x02; /* 下一个左移的位 */
+  }
+
+  max_byte = num - 1; /* 计算出最后一个数据字节的位置 */
+
+  while (byte <= max_byte)
+  {
+    tmp = array[byte];
+
+    if (reg & 0x20)
+    {
+      reg = reg << 1 | (tmp & bit ? 0x01 : 0x00);
+      reg ^= poly;
+    }
+    else
+    {
+      reg = reg << 1 | (tmp & bit ? 0x01 : 0x00);
+    }
+
+
+    if (0 != refin)
+    {
+      bit <<= 1;
+    }
+    else
+    {
+      bit >>= 1;
+    }
+
+    if (0 == bit)
+    {
+      ++byte;
+  
+      if (0 != refin)
+      {
+        bit = 0x01; /* 下一个左移的位 */
+      }
+      else
+      {
+        bit = 0x80; /* 下一个左移的位 */
+      }
+    }
+  }
+
+  /* 以下是填充位左移 */
+
+  bit = 6; /* 剩下的填充位个数 */
+  
+  for ( ; ; )
+  {
+    if (reg & 0x20)
+    {
+      reg = reg << 1;
+      reg ^= poly;
+    }
+    else
+    {
+      reg = reg << 1;
+    }
+
+    --bit;
+
+    if (0 == bit)
+    {
+      break;
+    }
+  }
+
+  if (0 != refout)
+  {
+    reg = byte_reverse(reg) >> 2;
+  }
+
+  reg ^= xorout;
+
+  return reg & 0x3f;
+}
+
+unsigned char CRC7(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+{
+  unsigned char reg;
+
+  if (num < 1) return 0;
+
+  unsigned int byte;
+  unsigned char bit;
+  unsigned char tmp;
+  unsigned int max_byte;
+
+  if (0 != refin)
+  {
+    reg  = byte_reverse(array[0]) >> 1 & 0x7f;
+  }
+  else
+  {
+    reg  = array[0] >> 1 & 0x7f;
+  }
+
+  reg ^= init;
+
+  byte = 0; /* 下一个左移的数据字节，即第一个数据字节，因为还有一位没有左移 */
+
+  if (0 != refin)
+  {
+    bit = 0x80; /* 下一个左移的位 */
+  }
+  else
+  {
+    bit = 0x01; /* 下一个左移的位 */
+  }
+
+  max_byte = num - 1; /* 计算出最后一个数据字节的位置 */
+
+  while (byte <= max_byte)
+  {
+    tmp = array[byte];
+
+    if (reg & 0x40)
+    {
+      reg = reg << 1 | (tmp & bit ? 0x01 : 0x00);
+      reg ^= poly;
+    }
+    else
+    {
+      reg = reg << 1 | (tmp & bit ? 0x01 : 0x00);
+    }
+
+
+    if (0 != refin)
+    {
+      bit <<= 1;
+    }
+    else
+    {
+      bit >>= 1;
+    }
+
+    if (0 == bit)
+    {
+      ++byte;
+  
+      if (0 != refin)
+      {
+        bit = 0x01; /* 下一个左移的位 */
+      }
+      else
+      {
+        bit = 0x80; /* 下一个左移的位 */
+      }
+    }
+  }
+
+  /* 以下是填充位左移 */
+
+  bit = 7; /* 剩下的填充位个数 */
+  
+  for ( ; ; )
+  {
+    if (reg & 0x40)
+    {
+      reg = reg << 1;
+      reg ^= poly;
+    }
+    else
+    {
+      reg = reg << 1;
+    }
+
+    --bit;
+
+    if (0 == bit)
+    {
+      break;
+    }
+  }
+
+  if (0 != refout)
+  {
+    reg = byte_reverse(reg) >> 1;
+  }
+
+  reg ^= xorout;
+
+  return reg & 0x7f;
 }
 
 unsigned char CRC8(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
@@ -152,9 +603,7 @@ unsigned char CRC8(const unsigned char * const array, const unsigned int num, co
 
   /* 以下是填充字节左移 */
 
-  byte = 1; /* 剩下的填充字节数（值为零） */
-
-  bit = 0; /* 用于对每个字节的位计数 */
+  bit = 8; /* 剩下的填充位个数 */
   
   for ( ; ; )
   {
@@ -168,16 +617,11 @@ unsigned char CRC8(const unsigned char * const array, const unsigned int num, co
       reg <<= 1;
     }
 
-    ++bit;
+    --bit;
 
-    if (bit >= 8)
+    if (0 == bit)
     {
-      --byte;
-      if (0 == byte)
-      {
-        break;
-      }
-      bit = 0;
+      break;
     }
   }
 
@@ -408,7 +852,7 @@ unsigned int CRC16(const unsigned char * const array, const unsigned int num, co
     byte = num;
   }
 
-  bit = 0; /* 用于对每个字节的位计数 */
+  bit = byte << 3; /* 剩下的填充位个数 */
   
   for ( ; ; )
   {
@@ -422,16 +866,11 @@ unsigned int CRC16(const unsigned char * const array, const unsigned int num, co
       reg = reg << 1;
     }
 
-    ++bit;
+    --bit;
 
-    if (bit >= 8)
+    if (0 == bit)
     {
-      --byte;
-      if (0 == byte)
-      {
-        break;
-      }
-      bit = 0;
+      break;
     }
   }
 
@@ -716,7 +1155,7 @@ unsigned long int CRC32(const unsigned char * const array, const unsigned int nu
     byte = num;
   }
 
-  bit = 0; /* 用于对每个字节的位计数 */
+  bit = byte << 3; /* 剩下的填充位个数 */
   
   for ( ; ; )
   {
@@ -730,16 +1169,11 @@ unsigned long int CRC32(const unsigned char * const array, const unsigned int nu
       reg = reg << 1;
     }
 
-    ++bit;
+    --bit;
 
-    if (bit >= 8)
+    if (0 == bit)
     {
-      --byte;
-      if (0 == byte)
-      {
-        break;
-      }
-      bit = 0;
+      break;
     }
   }
 
