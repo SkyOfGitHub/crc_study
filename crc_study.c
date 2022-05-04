@@ -113,7 +113,7 @@ unsigned char CRC4(const unsigned char * const array, const unsigned int num, co
   }
   else
   {
-    reg  = array[0] >> 4 & 0x0f;
+    reg  = array[0] >> 4;
   }
 
   reg ^= init;
@@ -221,7 +221,7 @@ unsigned char CRC5(const unsigned char * const array, const unsigned int num, co
   }
   else
   {
-    reg  = array[0] >> 3 & 0x1f;
+    reg  = array[0] >> 3;
   }
 
   reg ^= init;
@@ -329,7 +329,7 @@ unsigned char CRC6(const unsigned char * const array, const unsigned int num, co
   }
   else
   {
-    reg  = array[0] >> 2 & 0x3f;
+    reg  = array[0] >> 2;
   }
 
   reg ^= init;
@@ -437,7 +437,7 @@ unsigned char CRC7(const unsigned char * const array, const unsigned int num, co
   }
   else
   {
-    reg  = array[0] >> 1 & 0x7f;
+    reg  = array[0] >> 1;
   }
 
   reg ^= init;
