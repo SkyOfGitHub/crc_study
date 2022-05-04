@@ -109,7 +109,7 @@ unsigned char CRC4(const unsigned char * const array, const unsigned int num, co
 
   if (0 != refin)
   {
-    reg  = byte_reverse(array[0]) >> 4 & 0x0f;
+    reg  = byte_reverse(array[0]) >> 4;
   }
   else
   {
@@ -217,7 +217,7 @@ unsigned char CRC5(const unsigned char * const array, const unsigned int num, co
 
   if (0 != refin)
   {
-    reg  = byte_reverse(array[0]) >> 3 & 0x1f;
+    reg  = byte_reverse(array[0]) >> 3;
   }
   else
   {
@@ -325,7 +325,7 @@ unsigned char CRC6(const unsigned char * const array, const unsigned int num, co
 
   if (0 != refin)
   {
-    reg  = byte_reverse(array[0]) >> 2 & 0x3f;
+    reg  = byte_reverse(array[0]) >> 2;
   }
   else
   {
@@ -433,7 +433,7 @@ unsigned char CRC7(const unsigned char * const array, const unsigned int num, co
 
   if (0 != refin)
   {
-    reg  = byte_reverse(array[0]) >> 1 & 0x7f;
+    reg  = byte_reverse(array[0]) >> 1;
   }
   else
   {
