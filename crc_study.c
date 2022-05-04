@@ -118,7 +118,7 @@ unsigned char CRC4(const unsigned char * const array, const unsigned int num, co
 
   reg ^= init;
 
-  byte = 0; /* 下一个左移的数据字节，即第一个数据字节，因为还有2位没有左移 */
+  byte = 0; /* 下一个左移的数据字节，即第一个数据字节，因为还有4位没有左移 */
 
   if (0 != refin)
   {
@@ -226,7 +226,7 @@ unsigned char CRC5(const unsigned char * const array, const unsigned int num, co
 
   reg ^= init;
 
-  byte = 0; /* 下一个左移的数据字节，即第一个数据字节，因为还有2位没有左移 */
+  byte = 0; /* 下一个左移的数据字节，即第一个数据字节，因为还有3位没有左移 */
 
   if (0 != refin)
   {
@@ -601,7 +601,7 @@ unsigned char CRC8(const unsigned char * const array, const unsigned int num, co
     }
   }
 
-  /* 以下是填充字节左移 */
+  /* 以下是填充位左移 */
 
   bit = 8; /* 剩下的填充位个数 */
   
@@ -841,7 +841,7 @@ unsigned int CRC16(const unsigned char * const array, const unsigned int num, co
     }
   }
 
-  /* 以下是填充字节左移 */
+  /* 以下是填充位左移 */
 
   if (num >= 2) /* 计算剩下的填充字节数（值为零） */
   {
@@ -1144,7 +1144,7 @@ unsigned long int CRC32(const unsigned char * const array, const unsigned int nu
     }
   }
 
-  /* 以下是填充字节左移 */
+  /* 以下是填充位左移 */
 
   if (num >= 4) /* 计算剩下的填充字节数（值为零） */
   {
