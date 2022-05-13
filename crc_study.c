@@ -1,6 +1,7 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "crc_study.h"
 
 #define POLY_CRC8 0x07 /* CRC-8: x8+x2+x+1 */
 #define POLY_CRC7 0x09 /* CRC-7/MMC: x7+x3+1 */
@@ -10,13 +11,6 @@
 // unsigned char CRC_7(unsigned char *, unsigned int);
 // unsigned int CRC_16(unsigned char *, unsigned int);
 // unsigned int CRC_16_for_SD_CMD(unsigned char *array, unsigned int num);
-unsigned char CRC4(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
-unsigned char CRC5(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
-unsigned char CRC6(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
-unsigned char CRC7(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
-unsigned char CRC8(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout);
-unsigned int CRC16(const unsigned char * const array, const unsigned int num, const unsigned int poly, const unsigned int init, const unsigned char refin, const unsigned char refout, const unsigned int xorout);
-unsigned long int CRC32(const unsigned char * const array, const unsigned int num, const unsigned long int poly, const unsigned long int init, const unsigned char refin, const unsigned char refout, const unsigned long int xorout);
 
 static const unsigned char array[] = {0xfe, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78};
 // static const unsigned char array[] = {0x40, 0x00, 0x00, 0x00, 0x00,};
@@ -25,54 +19,78 @@ static unsigned int watch16;
 static unsigned long int watch32;
 static unsigned char array1[512];
 
-
-
 int main(void)
 {
+  struct CRC_SETTING crc_setting;
+  
   unsigned int i;
 
-  watch = CRC4((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x03, 0x00, 1, 1, 0x00); /* poly: CRC-4/ITU x4+x+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
+  for (i = 0; i < 256; ++i)
+  {
+    crc_setting = (struct CRC_SETTING){0x09, 0x00, 0, 0, 0x00};
+    printf("crc7 table test: 0x%02x\n", CRC7((unsigned char *)&i, 1, (const struct CRC_SETTING * const)&crc_setting) << 1);
+  }
+
+  crc_setting = (struct CRC_SETTING){0x03, 0x00, 1, 1, 0x00};
+  watch = CRC4((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-4/ITU x4+x+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
   printf("CRC4 = 0x%02X\n", watch);
 
-  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x09, 0x09, 0, 0, 0x00); /* poly: CRC-5/EPC x5+x3+1, init: 0x09, refin: false, refout: false, xorout: 0x00 */
+  crc_setting = (struct CRC_SETTING){0x09, 0x09, 0, 0, 0x00};
+  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-5/EPC x5+x3+1, init: 0x09, refin: false, refout: false, xorout: 0x00 */
   printf("CRC5 = 0x%02X\n", watch);
-  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x15, 0x00, 1, 1, 0x00); /* poly: CRC-5/ITU x5+x4+x2+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
+  crc_setting = (struct CRC_SETTING){0x15, 0x00, 1, 1, 0x00};
+  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-5/ITU x5+x4+x2+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
   printf("CRC5 = 0x%02X\n", watch);
-  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x05, 0x1f, 1, 1, 0x1f); /* poly: CRC-5/USB x5+x2+1, init: 0x1f, refin: true, refout: true, xorout: 0x1f */
+  crc_setting = (struct CRC_SETTING){0x05, 0x1f, 1, 1, 0x1f};
+  watch = CRC5((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-5/USB x5+x2+1, init: 0x1f, refin: true, refout: true, xorout: 0x1f */
   printf("CRC5 = 0x%02X\n", watch);
 
-  watch = CRC6((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x03, 0x00, 1, 1, 0x00); /* poly: CRC-6/ITU x6+x+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
+  crc_setting = (struct CRC_SETTING){0x03, 0x00, 1, 1, 0x00};
+  watch = CRC6((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-6/ITU x6+x+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
   printf("CRC6 = 0x%02X\n", watch);
 
-  watch = CRC7((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x09, 0x00, 0, 0, 0x00); /* poly: CRC-7/MMC x7+x3+1, init: 0x00, refin: false, refout: false, xorout: 0x00 */
+  crc_setting = (struct CRC_SETTING){0x09, 0x00, 0, 0, 0x00};
+  watch = CRC7((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-7/MMC x7+x3+1, init: 0x00, refin: false, refout: false, xorout: 0x00 */
   printf("CRC7 = 0x%02X\n", watch);
+
+  crc_setting = (struct CRC_SETTING){0x09, 0x00, 0, 0, 0x00};
+  watch = CRC7T((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-7/MMC x7+x3+1, init: 0x00, refin: false, refout: false, xorout: 0x00 */
+  printf("CRC7T = 0x%02X\n", watch);
   // watch = CRC_7((unsigned char *)array, sizeof(array) / sizeof(unsigned char));
   // printf("CRC7 = 0x%02X\n", watch);
 
-  watch = CRC8((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x07, 0xff, 1, 1, 0x00); /* poly: CRC-8/ROHC x8+x2+x+1, init: 0xff, refin: true, refout: true, xorout: 0x00 */
+  crc_setting = (struct CRC_SETTING){0x07, 0xff, 1, 1, 0x00};
+  watch = CRC8((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-8/ROHC x8+x2+x+1, init: 0xff, refin: true, refout: true, xorout: 0x00 */
   printf("CRC8 = 0x%02X\n", watch);
-  watch = CRC8((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x07, 0x00, 0, 0, 0x55); /* poly: CRC-8/ITU x8+x2+x+1, init: 0x00, refin: false, refout: false, xorout: 0x55 */
+  crc_setting = (struct CRC_SETTING){0x07, 0x00, 0, 0, 0x55};
+  watch = CRC8((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-8/ITU x8+x2+x+1, init: 0x00, refin: false, refout: false, xorout: 0x55 */
   printf("CRC8 = 0x%02X\n", watch);
-  watch = CRC8((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x31, 0x00, 1, 1, 0x00); /* poly: CRC-8/MAXIM x8+x5+x4+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
+  crc_setting = (struct CRC_SETTING){0x31, 0x00, 1, 1, 0x00};
+  watch = CRC8((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-8/MAXIM x8+x5+x4+1, init: 0x00, refin: true, refout: true, xorout: 0x00 */
   printf("CRC8 = 0x%02X\n", watch);
   // watch = CRC_8((unsigned char *)array, sizeof(array) / sizeof(unsigned char));
   // printf("CRC8 = 0x%02X\n", watch);
 
-  watch16 = CRC16((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x8005, 0x0000, 1, 1, 0xffff); /* poly: CRC-16/MAXIM x16+x15+x2+1, init: 0x0000, refin: true, refout: true, xorout: 0xffff */
+  crc_setting = (struct CRC_SETTING){0x8005, 0x0000, 1, 1, 0xffff};
+  watch16 = CRC16((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-16/MAXIM x16+x15+x2+1, init: 0x0000, refin: true, refout: true, xorout: 0xffff */
   printf("CRC16 = 0x%04X\n", watch16);
-  watch16 = CRC16((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x8005, 0xffff, 1, 1, 0xffff); /* poly: CRC-16/USB x16+x15+x2+1, init: 0xffff, refin: true, refout: true, xorout: 0xffff */
+  crc_setting = (struct CRC_SETTING){0x8005, 0xffff, 1, 1, 0xffff};
+  watch16 = CRC16((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-16/USB x16+x15+x2+1, init: 0xffff, refin: true, refout: true, xorout: 0xffff */
   printf("CRC16 = 0x%04X\n", watch16);
   for (i = 0; i < 512; ++i) array1[i] = 0xff;
-  watch16 = CRC16((unsigned char *)array1, sizeof(array1) / sizeof(unsigned char), 0x1021, 0x0000, 0, 0, 0x0000); /* poly: CRC-16/SD CARD x16+x12+x5+1, init: 0x0000, refin: false, refout: false, xorout: 0x0000 */
+  crc_setting = (struct CRC_SETTING){0x1021, 0x0000, 0, 0, 0x0000};
+  watch16 = CRC16((unsigned char *)array1, sizeof(array1) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-16/SD CARD x16+x12+x5+1, init: 0x0000, refin: false, refout: false, xorout: 0x0000 */
   printf("CRC16 = 0x%04X\n", watch16);
   // watch16 = CRC_16((unsigned char *)array1, sizeof(array1) / sizeof(unsigned char));
   // printf("CRC16 = 0x%04X\n", watch16);
   // watch16 = CRC_16_for_SD_CMD((unsigned char *)array1, sizeof(array1) / sizeof(unsigned char));
   // printf("CRC_16_for_SD_CMD = 0x%04X\n", watch16);
 
-  watch32 = CRC32((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x04c11db7, 0xfffffffful, 1, 1, 0xfffffffful); /* poly: CRC-32 x32+x26+x23+x22+x16+x12+x11+x10+x8+x7+x5+x4+x2+x+1, init: 0xffffffff, refin: true, refout: true, xorout: 0xffffffff */
+  crc_setting = (struct CRC_SETTING){0x04c11db7, 0xfffffffful, 1, 1, 0xfffffffful};
+  watch32 = CRC32((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-32 x32+x26+x23+x22+x16+x12+x11+x10+x8+x7+x5+x4+x2+x+1, init: 0xffffffff, refin: true, refout: true, xorout: 0xffffffff */
   printf("CRC32 = 0x%08lX\n", watch32);
-  watch32 = CRC32((unsigned char *)array, sizeof(array) / sizeof(unsigned char), 0x04c11db7, 0xfffffffful, 0, 0, 0x00000000); /* poly: CRC-32/MPEG-2 x32+x26+x23+x22+x16+x12+x11+x10+x8+x7+x5+x4+x2+x+1, init: 0xffffffff, refin: false, refout: false, xorout: 0x00000000 */
+  crc_setting = (struct CRC_SETTING){0x04c11db7, 0xfffffffful, 0, 0, 0x00000000};
+  watch32 = CRC32((unsigned char *)array, sizeof(array) / sizeof(unsigned char), (const struct CRC_SETTING * const)&crc_setting); /* poly: CRC-32/MPEG-2 x32+x26+x23+x22+x16+x12+x11+x10+x8+x7+x5+x4+x2+x+1, init: 0xffffffff, refin: false, refout: false, xorout: 0x00000000 */
   printf("CRC32 = 0x%08lX\n", watch32);
   return 0;
 }
@@ -96,11 +114,23 @@ static unsigned char byte_reverse(unsigned char byte)
   return result;
 }
 
-unsigned char CRC4(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+unsigned char CRC4(const unsigned char * const array, const unsigned int num, const struct CRC_SETTING * const crc_setting)
 {
   unsigned char reg;
 
-  if (num < 1) return 0;
+  if (num < 1 || NULL == crc_setting) return 0;
+
+  unsigned char poly; 
+  unsigned char init; 
+  unsigned char refin; 
+  unsigned char refout; 
+  unsigned char xorout;
+
+  poly = crc_setting->poly;
+  init = crc_setting->init;
+  refin = crc_setting->refin;
+  refout = crc_setting->refout;
+  xorout = crc_setting->xorout;
 
   unsigned int byte;
   unsigned char bit;
@@ -204,11 +234,23 @@ unsigned char CRC4(const unsigned char * const array, const unsigned int num, co
   return reg & 0x0f;
 }
 
-unsigned char CRC5(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+unsigned char CRC5(const unsigned char * const array, const unsigned int num, const struct CRC_SETTING * const crc_setting)
 {
   unsigned char reg;
 
-  if (num < 1) return 0;
+  if (num < 1 || NULL == crc_setting) return 0;
+
+  unsigned char poly;
+  unsigned char init;
+  unsigned char refin;
+  unsigned char refout;
+  unsigned char xorout;
+
+  poly = crc_setting->poly;
+  init = crc_setting->init;
+  refin = crc_setting->refin;
+  refout = crc_setting->refout;
+  xorout = crc_setting->xorout;
 
   unsigned int byte;
   unsigned char bit;
@@ -312,12 +354,24 @@ unsigned char CRC5(const unsigned char * const array, const unsigned int num, co
   return reg & 0x1f;
 }
 
-unsigned char CRC6(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+unsigned char CRC6(const unsigned char * const array, const unsigned int num, const struct CRC_SETTING * const crc_setting)
 {
   unsigned char reg;
 
-  if (num < 1) return 0;
+  if (num < 1 || NULL == crc_setting) return 0;
 
+  unsigned char poly;
+  unsigned char init;
+  unsigned char refin;
+  unsigned char refout;
+  unsigned char xorout;
+
+  poly = crc_setting->poly;
+  init = crc_setting->init;
+  refin = crc_setting->refin;
+  refout = crc_setting->refout;
+  xorout = crc_setting->xorout;
+  
   unsigned int byte;
   unsigned char bit;
   unsigned char tmp;
@@ -420,11 +474,125 @@ unsigned char CRC6(const unsigned char * const array, const unsigned int num, co
   return reg & 0x3f;
 }
 
-unsigned char CRC7(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+static unsigned char crc7_table[256];
+static struct CRC_SETTING crc7_setting;
+
+unsigned char CRC7T(const unsigned char * const array, const unsigned int num, const struct CRC_SETTING * const crc_setting)
 {
   unsigned char reg;
 
-  if (num < 1) return 0;
+  if (num < 1 || NULL == crc_setting) return 0;
+
+  unsigned char poly;
+  unsigned char init;
+  unsigned char refin;
+  unsigned char refout;
+  unsigned char xorout;
+
+  poly = crc_setting->poly;
+  init = crc_setting->init;
+  refin = crc_setting->refin;
+  refout = crc_setting->refout;
+  xorout = crc_setting->xorout;
+
+  if (poly != crc7_setting.poly || 
+      refin != crc7_setting.refin)
+  {
+    crc7_setting.poly = poly;
+    crc7_setting.init = init;
+    crc7_setting.refin = refin;
+    crc7_setting.refout = refout;
+    crc7_setting.xorout = xorout;
+
+    struct CRC_SETTING setting;
+
+    setting.poly = poly;
+    setting.init = 0x00;
+    setting.refin = 0x00;
+    setting.refout = 0x00;
+    setting.xorout = 0x00;
+    
+    unsigned int i;
+
+    for (i = 0; i < 256; ++i)
+    {
+      unsigned char tmp;
+
+      tmp = i;
+      
+      if (0 != refin)
+      {
+        tmp = byte_reverse(tmp);
+      }
+
+      tmp = CRC7((unsigned char *)&tmp, 1, (const struct CRC_SETTING * const)&setting) << 1;
+      
+      if (0 != refin)
+      {
+        tmp = byte_reverse(tmp);
+      }
+
+      crc7_table[i] = tmp;
+    }
+  }
+
+  if (0 != refin)
+  {
+    reg = byte_reverse(init << 1);
+  }
+  else
+  {
+    reg = init << 1;
+  }
+
+  unsigned int i;
+
+  for (i = 0; i < num; ++i)
+  {
+    reg = crc7_table[reg ^ array[i]];
+  }
+
+  if (0 != refin)
+  {
+    if (0 == refout)
+    {
+      reg = byte_reverse(reg) >> 1;
+    }
+  }
+  else
+  {
+    if (0 != refout)
+    {
+      reg = byte_reverse(reg);
+    }
+    else
+    {
+      reg = reg >> 1 & 0x7f;
+    }
+  }
+
+  reg ^= xorout;
+
+  return reg & 0x7f;
+}
+
+unsigned char CRC7(const unsigned char * const array, const unsigned int num, const struct CRC_SETTING * const crc_setting)
+{
+  unsigned char reg;
+
+  if (num < 1 || NULL == crc_setting) return 0;
+
+  unsigned char poly;
+  unsigned char init;
+  unsigned char refin;
+  unsigned char refout;
+  unsigned char xorout;
+
+  poly = crc_setting->poly;
+  init = crc_setting->init;
+  refin = crc_setting->refin;
+  refout = crc_setting->refout;
+  xorout = crc_setting->xorout;
 
   unsigned int byte;
   unsigned char bit;
@@ -528,12 +696,24 @@ unsigned char CRC7(const unsigned char * const array, const unsigned int num, co
   return reg & 0x7f;
 }
 
-unsigned char CRC8(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
+unsigned char CRC8(const unsigned char * const array, const unsigned int num, const struct CRC_SETTING * const crc_setting)
 {
   unsigned char reg;
 
-  if (num < 1) return 0;
+  if (num < 1 || NULL == crc_setting) return 0;
 
+  unsigned char poly;
+  unsigned char init;
+  unsigned char refin;
+  unsigned char refout;
+  unsigned char xorout;
+
+  poly = crc_setting->poly;
+  init = crc_setting->init;
+  refin = crc_setting->refin;
+  refout = crc_setting->refout;
+  xorout = crc_setting->xorout;
+  
   unsigned int byte;
   unsigned char bit;
   unsigned char tmp;
@@ -748,11 +928,23 @@ unsigned char CRC8(const unsigned char * const array, const unsigned int num, co
 //   return (result >> 1) & 0x7F;
 // }
 
-unsigned int CRC16(const unsigned char * const array, const unsigned int num, const unsigned int poly, const unsigned int init, const unsigned char refin, const unsigned char refout, const unsigned int xorout)
+unsigned int CRC16(const unsigned char * const array, const unsigned int num, const struct CRC_SETTING * const crc_setting)
 {
   unsigned int reg;
 
-  if (num < 1) return 0;
+  if (num < 1 || NULL == crc_setting) return 0;
+
+  unsigned int poly;
+  unsigned int init;
+  unsigned char refin;
+  unsigned char refout;
+  unsigned int xorout;
+
+  poly = crc_setting->poly;
+  init = crc_setting->init;
+  refin = crc_setting->refin;
+  refout = crc_setting->refout;
+  xorout = crc_setting->xorout;
 
   unsigned int byte;
   unsigned char bit;
@@ -1027,11 +1219,23 @@ unsigned int CRC16(const unsigned char * const array, const unsigned int num, co
 //   return (rslt & 0xFFFF);
 // }
 
-unsigned long int CRC32(const unsigned char * const array, const unsigned int num, const unsigned long int poly, const unsigned long int init, const unsigned char refin, const unsigned char refout, const unsigned long int xorout)
+unsigned long int CRC32(const unsigned char * const array, const unsigned int num, const struct CRC_SETTING * const crc_setting)
 {
   unsigned long int reg;
 
-  if (num < 1) return 0;
+  if (num < 1 || NULL == crc_setting) return 0;
+
+  unsigned long int poly;
+  unsigned long int init;
+  unsigned char refin;
+  unsigned char refout;
+  unsigned long int xorout;
+
+  poly = crc_setting->poly;
+  init = crc_setting->init;
+  refin = crc_setting->refin;
+  refout = crc_setting->refout;
+  xorout = crc_setting->xorout;
 
   unsigned int byte;
   unsigned char bit;
