@@ -103,6 +103,7 @@ int main(void)
   return 0;
 }
 
+#if 0
 static unsigned char byte_reverse(unsigned char byte)
 {
   static unsigned char bit[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, };
@@ -120,6 +121,43 @@ static unsigned char byte_reverse(unsigned char byte)
   }
 
   return result;
+}
+#else
+static unsigned char byte_reverse(unsigned char byte)
+{
+  unsigned char result;
+
+  result = (byte >> 1 & 0x55) | (byte << 1 & 0xaa);
+  result = (result >> 2 & 0x33) | (result << 2 & 0xcc);
+  result = (result >> 4 & 0x0f) | (result << 4);
+
+  return result;
+}
+#endif
+
+static unsigned int two_bytes_reverse(unsigned int bytes)
+{
+  unsigned int result;
+
+  result = (bytes >> 1 & 0x5555) | (bytes << 1 & 0xaaaa);
+  result = (result >> 2 & 0x3333) | (result << 2 & 0xcccc);
+  result = (result >> 4 & 0x0f0f) | (result << 4 & 0xf0f0);
+  result = (result >> 8 & 0x00ff) | (result << 8);
+
+  return result & 0xffffu;
+}
+
+static unsigned long int four_bytes_reverse(unsigned long int bytes)
+{
+  unsigned long int result;
+
+  result = (bytes >> 1 & 0x55555555) | (bytes << 1 & 0xaaaaaaaa);
+  result = (result >> 2 & 0x33333333) | (result << 2 & 0xcccccccc);
+  result = (result >> 4 & 0x0f0f0f0f) | (result << 4 & 0xf0f0f0f0);
+  result = (result >> 8 & 0x00ff00ff) | (result << 8 & 0xff00ff00);
+  result = (result >> 16 & 0x0000ffff) | (result << 16);
+
+  return result & 0xfffffffful;
 }
 
 unsigned char CRC4(const unsigned char * const array, const unsigned int num, const unsigned char poly, const unsigned char init, const unsigned char refin, const unsigned char refout, const unsigned char xorout)
@@ -902,7 +940,7 @@ unsigned int CRC16(const unsigned char * const array, const unsigned int num, co
 
   if (0 != refout)
   {
-    reg = byte_reverse(reg & 0x00ff) << 8 | byte_reverse(reg >> 8 & 0x00ff);
+    reg = two_bytes_reverse(reg);
   }
 
   reg ^= xorout;
@@ -1205,7 +1243,7 @@ unsigned long int CRC32(const unsigned char * const array, const unsigned int nu
 
   if (0 != refout)
   {
-    reg = byte_reverse(reg & 0x00ff) << 24 | byte_reverse(reg >> 8 & 0x00ff) << 16 | byte_reverse(reg >> 16 & 0x00ff) << 8 | byte_reverse(reg >> 24);
+    reg = four_bytes_reverse(reg);
   }
 
   reg ^= xorout;
@@ -1675,7 +1713,7 @@ unsigned int CRC16T(const unsigned char * const array, const unsigned int num, c
 
   if (0 != refin)
   {
-    reg = byte_reverse(init & 0xff) << 8 | byte_reverse(init >> 8 & 0xff);
+    reg = two_bytes_reverse(init);
   }
   else
   {
@@ -1703,14 +1741,14 @@ unsigned int CRC16T(const unsigned char * const array, const unsigned int num, c
   {
     if (0 == refout)
     {
-      reg = byte_reverse(reg & 0xff) << 8  | byte_reverse(reg >> 8 & 0xff);
+      reg = two_bytes_reverse(reg);
     }
   }
   else
   {
     if (0 != refout)
     {
-      reg = byte_reverse(reg & 0xff) << 8  | byte_reverse(reg >> 8 & 0xff);
+      reg = two_bytes_reverse(reg);
     }
   }
 
@@ -1765,7 +1803,7 @@ unsigned long int CRC32T(const unsigned char * const array, const unsigned int n
 
   if (0 != refin)
   {
-    reg = byte_reverse(init & 0x00ff) << 24 | byte_reverse(init >> 8 & 0x00ff) << 16 | byte_reverse(init >> 16 & 0x00ff) << 8 | byte_reverse(init >> 24);
+    reg = four_bytes_reverse(init);
   }
   else
   {
@@ -1778,14 +1816,14 @@ unsigned long int CRC32T(const unsigned char * const array, const unsigned int n
   {
     for (i = 0; i < num; ++i)
     {
-      reg = (reg >> 8 & 0x00ffffff) ^ crc32_table[(reg & 0x00ff) ^ array[i]];
+      reg = (reg >> 8 & 0x00ffffff) ^ crc32_table[(reg & 0x000000ff) ^ array[i]];
     }
   }
   else
   {
     for (i = 0; i < num; ++i)
     {
-      reg = reg << 8 ^ crc32_table[(reg >> 24 & 0x00ff) ^ array[i]];
+      reg = reg << 8 ^ crc32_table[(reg >> 24 & 0x000000ff) ^ array[i]];
     }
   }
 
@@ -1793,14 +1831,14 @@ unsigned long int CRC32T(const unsigned char * const array, const unsigned int n
   {
     if (0 == refout)
     {
-      reg = byte_reverse(reg & 0x00ff) << 24 | byte_reverse(reg >> 8 & 0x00ff) << 16 | byte_reverse(reg >> 16 & 0x00ff) << 8 | byte_reverse(reg >> 24);
+      reg = four_bytes_reverse(reg);
     }
   }
   else
   {
     if (0 != refout)
     {
-      reg = byte_reverse(reg & 0x00ff) << 24 | byte_reverse(reg >> 8 & 0x00ff) << 16 | byte_reverse(reg >> 16 & 0x00ff) << 8 | byte_reverse(reg >> 24);
+      reg = four_bytes_reverse(reg);
     }
   }
 
